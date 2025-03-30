@@ -172,3 +172,11 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# notebooks tests
+.ipynb
+.ipynb_checkpoints
+__pycache__
+
+# Ignorar archivos CSV dentro de data_source/
+data_source/*.csv
