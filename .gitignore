@@ -174,9 +174,12 @@ cython_debug/
 .pypirc
 
 # notebooks tests
-.ipynb
+*.ipynb
 .ipynb_checkpoints
 __pycache__
 
 # Ignorar archivos CSV dentro de data_source/
 data_source/*.csv
+
+# Ignorar logs
+logs/*.log
