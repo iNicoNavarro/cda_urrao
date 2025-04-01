@@ -26,7 +26,7 @@ st.write(
 )
 
 # --- Configuración ---
-DAYS_BEFORE: int = 3
+# DAYS_BEFORE: int = 3
 FILE_NAME: str = 'rtcmyec_consolidado_2024.csv'
 INPUT_FOLDER: str = "./data_source"
 TEMPLATE_NAME: str = 'cda_narino_notifications'
@@ -52,13 +52,23 @@ if "clients" not in st.session_state:
 if 'token' not in st.session_state:
     st.session_state.token = None
 
+if 'days_before' not in st.session_state:
+    st.session_state.days_before = None
+
+st.write("### Ingrese los días de anterioridad (puede ser negativo, cero o positivo)")
+st.session_state.days_before = st.number_input(
+    "Días antes o después del vencimiento (ej: 0 para hoy, -1 para ayer, 1 para mañana)", 
+    value=0,
+    step=1
+)
+
 # --- Botón 1: Verificar clientes ---
 if st.button("🔍 Verificar clientes a contactar"):
     try:
         data = load_data(file_path)
         clients = get_clients_for_messages(
             df=data, 
-            days_before=DAYS_BEFORE
+            days_before=st.session_state.days_before
         )
 
         if clients.empty:
@@ -97,7 +107,9 @@ if st.session_state.clients is not None:
                 logger.error("❌ Token no ingresado por el usuario.")
             else:
                 logger.info(f"📨 Inicio del proceso de envío de mensajes a {len(st.session_state.clients)} clientes.")
-                clients_with_params = extract_message_parameters(st.session_state.clients)
+                clients_with_params = extract_message_parameters(
+                    st.session_state.clients
+                )
                 
                 if clients_with_params.empty:
                     st.info("📭 No se encontraron parámetros válidos para enviar mensajes.")
@@ -126,7 +138,7 @@ if st.session_state.clients is not None:
                                     successful_messages += 1
                                     successful_clients.append(f"{row['placa']} ({celular})")
                                     st.write(f"✅ Mensaje enviado a {row['placa']} - Número: {celular}")
-                                    logger.info(f"✅ Mensaje enviado a {row['Beneficiario Nombre']} - Placa: {row['placa']} - Número: {celular} - Vigencia: {row['fecha_vencimiento']}")
+                                    logger.info(f"✅ Mensaje enviado a - Placa: {row['placa']} - Número: {celular} - Vigencia: {row['fecha_vencimiento']}")
 
                                 else:
                                     error_message = response.get("error", {}).get("message", "Error desconocido")
