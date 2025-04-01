@@ -1,12 +1,9 @@
 import pandas as pd
 
 COLUMNS: list = [
-    "Fecha", 
-    "Modal. Pago Contado", 
-    "Modal. Pago Credito", 
-    "Beneficiario Nombre", 
-    "Doc. Fuente", 
-    "Beneficiario Celular"
+    "placa",
+    "fecha_revision",
+    "telefono"
 ]
 
 
