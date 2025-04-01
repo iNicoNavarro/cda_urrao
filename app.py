@@ -27,7 +27,7 @@ st.write(
 
 # --- Configuración ---
 DAYS_BEFORE: int = 3
-FILE_NAME: str = 'Ventas_Consulta2024.csv'
+FILE_NAME: str = 'rtcmyec_consolidado_2024.csv'
 INPUT_FOLDER: str = "./data_source"
 TEMPLATE_NAME: str = 'cda_narino_notifications'
 
@@ -70,15 +70,12 @@ if st.button("🔍 Verificar clientes a contactar"):
             st.success(f"🔔 Se encontraron {valid_clients.shape[0]} cliente(s) válidos que deben ser contactados.")
             st.warning(f"⚠️ Se encontraron {invalid_clients.shape[0]} cliente(s) sin número de celular válido o vacío.")
             
-            # Mostrar clientes válidos
             st.dataframe(valid_clients, use_container_width=True)
             
-            # Mostrar clientes inválidos (sin número de celular)
             if not invalid_clients.empty:
                 st.write("Clientes sin número de celular válido:")
                 st.dataframe(invalid_clients, use_container_width=True)
             
-            # Guardar en sesión
             st.session_state.clients = valid_clients
             st.session_state.invalid_clients = invalid_clients
 
@@ -99,8 +96,7 @@ if st.session_state.clients is not None:
                 st.error("❌ Ingrese un Token válido antes de continuar.")
                 logger.error("❌ Token no ingresado por el usuario.")
             else:
-                logger.info("📨 Inicio del proceso de envío de mensajes a %d clientes.", len(st.session_state.clients))
-                
+                logger.info(f"📨 Inicio del proceso de envío de mensajes a {len(st.session_state.clients)} clientes.")
                 clients_with_params = extract_message_parameters(st.session_state.clients)
                 
                 if clients_with_params.empty:
@@ -112,7 +108,7 @@ if st.session_state.clients is not None:
 
                     for idx, row in clients_with_params.iterrows():
                         if row["valid_number"]:  
-                            celular = str(row["Beneficiario Celular"])
+                            celular = str(row["telefono"])
                             if not celular.startswith("57"):
                                 celular = f"57{celular}"
                             
@@ -120,29 +116,28 @@ if st.session_state.clients is not None:
                                 response = send_message(
                                     token=st.session_state.token,
                                     phone_number_id=PHONE_NUMBER_ID,
-                                    recipient_number="573175576781",#celular,
-                                    placa=row["Placa"],
+                                    recipient_number=celular,
+                                    placa=row["placa"],
                                     vigencia=row["fecha_vencimiento"].strftime("%Y-%m-%d"),
                                     template_name=TEMPLATE_NAME
                                 )
 
                                 if response.get("messages"):
                                     successful_messages += 1
-                                    successful_clients.append(f"{row['Beneficiario Nombre']} ({celular})")
-                                    st.write(f"✅ Mensaje enviado a {row['Beneficiario Nombre']} - Número: {celular}")
-                                    logger.info("✅ Mensaje enviado a %s - Número: %s - Placa: %s - Vigencia: %s",
-                                                row['Beneficiario Nombre'], celular, row["Placa"], row["fecha_vencimiento"])
+                                    successful_clients.append(f"{row['placa']} ({celular})")
+                                    st.write(f"✅ Mensaje enviado a {row['placa']} - Número: {celular}")
+                                    logger.info(f"✅ Mensaje enviado a {row['Beneficiario Nombre']} - Placa: {row['placa']} - Número: {celular} - Vigencia: {row['fecha_vencimiento']}")
+
                                 else:
                                     error_message = response.get("error", {}).get("message", "Error desconocido")
-                                    st.error(f"❌ Error al enviar mensaje a {row['Beneficiario Nombre']}: {error_message}")
-                                    logger.error("❌ Error al enviar mensaje a %s (%s): %s",
-                                                 row['Beneficiario Nombre'], celular, error_message)
+                                    st.error(f"❌ Error al enviar mensaje a {row['placa']}: {error_message}")
+                                    logger.error(f"❌ Error al enviar mensaje a {row['placa']} ({celular}): {error_message}")
 
                             except Exception as e:
                                 error_message = str(e)
-                                st.error(f"❌ Error al enviar mensaje a {row['Beneficiario Nombre']}: {error_message}")
-                                logger.error("❌ Error al enviar mensaje a %s (%s): %s",
-                                             row['Beneficiario Nombre'], celular, error_message)
+                                st.error(f"❌ Error al enviar mensaje a {row['placa']}: {error_message}")
+                                logger.error(f"❌ Error al enviar mensaje a {row['placa']} ({celular}): {error_message}")
+
                     
                     if successful_messages > 0:
                         st.success(f"✅ Se enviaron {successful_messages} mensajes exitosamente.")
@@ -150,7 +145,7 @@ if st.session_state.clients is not None:
                         for client in successful_clients:
                             st.write(f"- {client}")
                         
-                        logger.info("📋 Resumen: %d mensajes enviados exitosamente.", successful_messages)
+                        logger.info(f"📋 Resumen: {successful_messages} mensajes enviados exitosamente.")
 
         except Exception as e:
             st.error("❌ Error al enviar los mensajes.")
